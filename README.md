@@ -1,7 +1,7 @@
 # Gestión móvil de oportunidades y activaciones corporativas
 
 **Caso:** DSY1105_007D · Primera entrega (Evaluación Parcial 2) · Módulo **Oportunidades**
-**Integrantes:** _Nombre Apellido_ · _Nombre Apellido_  **Equipo N°:** _X_  **Trello:** _enlace_
+**Integrantes:** _Deland Cabello_ · _Ariel Catalan_  **Equipo N°:** _3_  **Trello:** _enlace_
 
 ## Funcionalidades implementadas
 - Registro e inicio de sesión (usuarios guardados en Room, contraseña con hash SHA-256).
