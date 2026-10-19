@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.Oportunidades" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
