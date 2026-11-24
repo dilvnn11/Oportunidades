@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class OportunidadViewModel(
+class OportunidadViewModel @JvmOverloads constructor(
     private val app: Application,
     private val repo: OportunidadRepository = OportunidadRepository(AppDatabase.obtener(app).oportunidadDao())
 ) : AndroidViewModel(app) {
@@ -63,6 +63,17 @@ class OportunidadViewModel(
     fun onEstado(v: String) = _uiState.update { it.copy(estado = v, estadoError = Validadores.estado(v)) }
     fun onObservaciones(v: String) = _uiState.update { it.copy(observaciones = v) }
     fun mostrarMensaje(m: String?) = _uiState.update { it.copy(mensaje = m) }
+
+    fun onQrEscaneado(contenido: String) {
+        val nuevaFuente = "QR: $contenido"
+        _uiState.update { 
+            it.copy(
+                fuente = nuevaFuente, 
+                fuenteError = Validadores.fuente(nuevaFuente),
+                mensaje = "Código QR escaneado con éxito"
+            ) 
+        }
+    }
 
     /** id = 0 → formulario nuevo; id > 0 → carga la oportunidad desde Room para editarla. */
     fun cargar(id: Long) {

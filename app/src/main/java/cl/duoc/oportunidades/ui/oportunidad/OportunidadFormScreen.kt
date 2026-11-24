@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Timeline
@@ -52,6 +53,8 @@ import cl.duoc.oportunidades.dominio.Opciones
 import cl.duoc.oportunidades.ui.componentes.CampoSelector
 import cl.duoc.oportunidades.ui.componentes.CampoValidado
 import coil.compose.AsyncImage
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,6 +77,22 @@ fun OportunidadFormScreen(vm: OportunidadViewModel, id: Long, alVolver: () -> Un
         if (concedido) vm.obtenerUbicacion() else permisoUbicacion.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
+    val qrScanner = rememberLauncherForActivityResult(ScanContract()) { result ->
+        if (result.contents != null) {
+            vm.onQrEscaneado(result.contents)
+        }
+    }
+    fun escanearQr() {
+        val options = ScanOptions().apply {
+            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+            setPrompt("Escanea el código QR de la oportunidad")
+            setCameraId(0)
+            setBeepEnabled(true)
+            setBarcodeImageEnabled(false)
+        }
+        qrScanner.launch(options)
+    }
+
     Scaffold(topBar = {
         TopAppBar(
             title = { Text(if (s.esEdicion) "Editar oportunidad" else "Nueva oportunidad") },
@@ -85,6 +104,11 @@ fun OportunidadFormScreen(vm: OportunidadViewModel, id: Long, alVolver: () -> Un
             CampoSelector(s.tipo, Opciones.tipos, vm::onTipo, "Tipo de oportunidad", Icons.Filled.Category, s.tipoError)
             CampoValidado(s.descripcion, vm::onDescripcion, "Descripción", Icons.Filled.Description, s.descripcionError, unaLinea = false, lineasMin = 3)
             CampoValidado(s.fuente, vm::onFuente, "Fuente de información", Icons.Filled.Link, s.fuenteError)
+            
+            OutlinedButton(onClick = { escanearQr() }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.QrCodeScanner, null); Text("  Escanear código QR (Fuente)")
+            }
+
             CampoSelector(s.prioridad, Opciones.prioridades, vm::onPrioridad, "Prioridad", Icons.Filled.Flag, s.prioridadError)
             CampoSelector(s.potencial, Opciones.potenciales, vm::onPotencial, "Potencial comercial", Icons.Filled.TrendingUp, s.potencialError)
             CampoSelector(s.estado, Opciones.estados, vm::onEstado, "Estado de gestión", Icons.Filled.Timeline, s.estadoError)

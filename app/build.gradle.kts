@@ -73,6 +73,9 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:$retrofit")
     implementation("com.squareup.okhttp3:logging-interceptor:$okhttp")
 
+    // QR Code Scanner (ZXing)
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
     // Image loading
     implementation("io.coil-kt:coil-compose:2.7.0")
 
