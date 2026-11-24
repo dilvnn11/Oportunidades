@@ -22,8 +22,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class OportunidadViewModel(private val app: Application) : AndroidViewModel(app) {
-    private val repo = OportunidadRepository(AppDatabase.obtener(app).oportunidadDao())
+class OportunidadViewModel(
+    private val app: Application,
+    private val repo: OportunidadRepository = OportunidadRepository(AppDatabase.obtener(app).oportunidadDao())
+) : AndroidViewModel(app) {
 
     /** Lista reactiva: se actualiza sola cuando Room recibe un cambio. */
     val oportunidades: StateFlow<List<OportunidadEntity>> = repo.observarTodas()
@@ -31,6 +33,25 @@ class OportunidadViewModel(private val app: Application) : AndroidViewModel(app)
 
     private val _uiState = MutableStateFlow(OportunidadUiState())
     val uiState: StateFlow<OportunidadUiState> = _uiState.asStateFlow()
+
+    init {
+        cargarIndicadoresExternos()
+        sincronizarConServidor()
+    }
+
+    fun cargarIndicadoresExternos() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(cargandoIndicadores = true) }
+            val ind = repo.obtenerIndicadoresExternos()
+            _uiState.update { it.copy(indicadores = ind, cargandoIndicadores = false) }
+        }
+    }
+
+    fun sincronizarConServidor() {
+        viewModelScope.launch {
+            repo.sincronizarConServidor()
+        }
+    }
 
     // ---- eventos de formulario (validación en cada cambio) ----
     fun onNombre(v: String) = _uiState.update { it.copy(nombre = v, nombreError = Validadores.nombre(v)) }
@@ -48,7 +69,7 @@ class OportunidadViewModel(private val app: Application) : AndroidViewModel(app)
         if (id == 0L) { _uiState.value = OportunidadUiState(); return }
         viewModelScope.launch {
             repo.obtener(id)?.let { o ->
-                _uiState.value = OportunidadUiState(
+                _uiState.value = _uiState.value.copy(
                     id = o.id, nombre = o.nombre, tipo = o.tipo, descripcion = o.descripcion,
                     fuente = o.fuente, prioridad = o.prioridad, potencial = o.potencial,
                     estado = o.estado, observaciones = o.observaciones,

@@ -1,9 +1,9 @@
 package cl.duoc.oportunidades.ui.oportunidad
 
+import cl.duoc.oportunidades.datos.remote.dto.MindicadorResponse
+
 /**
- * Estado inmutable de la pantalla OportunidadFormScreen.
- * Lo expone OportunidadViewModel mediante StateFlow; la UI solo lo lee y dibuja.
- * Los campos *Error los calcula el ViewModel con dominio/Validadores.
+ * Estado inmutable de las pantallas del módulo de Oportunidades.
  */
 data class OportunidadUiState(
     val id: Long = 0,
@@ -27,7 +27,9 @@ data class OportunidadUiState(
     val estadoError: String? = null,
     val mensaje: String? = null,
     val guardando: Boolean = false,
-    val guardadoExitosamente: Boolean = false
+    val guardadoExitosamente: Boolean = false,
+    val indicadores: MindicadorResponse? = null,
+    val cargandoIndicadores: Boolean = false
 ) {
     val esEdicion get() = id != 0L
 }

@@ -4,17 +4,41 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
+
 android {
     namespace = "cl.duoc.oportunidades"
     compileSdk = 34
+
     defaultConfig {
         applicationId = "cl.duoc.oportunidades"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    buildTypes { release { isMinifyEnabled = false } }
+
+    signingConfigs {
+        create("release") {
+            val keystoreFile = rootProject.file("release-key.jks")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = "password123"
+                keyAlias = "oportunidadeskey"
+                keyPassword = "password123"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            val keystoreFile = rootProject.file("release-key.jks")
+            if (keystoreFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -22,8 +46,12 @@ android {
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
 }
+
 dependencies {
     val room = "2.6.1"
+    val retrofit = "2.11.0"
+    val okhttp = "4.12.0"
+
     implementation(platform("androidx.compose:compose-bom:2024.10.00"))
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.3")
@@ -34,10 +62,24 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.3")
+    
+    // Room Database
     implementation("androidx.room:room-runtime:$room")
     implementation("androidx.room:room-ktx:$room")
     ksp("androidx.room:room-compiler:$room")
+    
+    // Retrofit & Networking
+    implementation("com.squareup.retrofit2:retrofit:$retrofit")
+    implementation("com.squareup.retrofit2:converter-gson:$retrofit")
+    implementation("com.squareup.okhttp3:logging-interceptor:$okhttp")
+
+    // Image loading
     implementation("io.coil-kt:coil-compose:2.7.0")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
+    
+    // Unit Testing
     testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }

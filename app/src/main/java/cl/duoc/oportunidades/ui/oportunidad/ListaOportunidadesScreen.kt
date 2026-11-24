@@ -1,34 +1,14 @@
 package cl.duoc.oportunidades.ui.oportunidad
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cl.duoc.oportunidades.datos.local.OportunidadEntity
+import cl.duoc.oportunidades.datos.remote.dto.MindicadorResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,26 +25,88 @@ fun ListaOportunidadesScreen(
     vm: OportunidadViewModel, alAgregar: () -> Unit, alEditar: (Long) -> Unit, alVolver: () -> Unit
 ) {
     val lista by vm.oportunidades.collectAsStateWithLifecycle()
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Oportunidades (${lista.size})") },
-                navigationIcon = { IconButton(onClick = alVolver) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver al menú") } }
+                navigationIcon = { IconButton(onClick = alVolver) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver al menú") } },
+                actions = {
+                    IconButton(onClick = { vm.sincronizarConServidor(); vm.cargarIndicadoresExternos() }) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Sincronizar datos")
+                    }
+                }
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = alAgregar, icon = { Icon(Icons.Filled.Add, null) }, text = { Text("Nueva oportunidad") })
         }
     ) { pad ->
-        if (lista.isEmpty()) {
-            Column(Modifier.fillMaxSize().padding(pad), Arrangement.Center, Alignment.CenterHorizontally) {
-                Icon(Icons.Filled.Lightbulb, null, Modifier.size(80.dp), tint = MaterialTheme.colorScheme.outline)
-                Text("Aún no hay oportunidades registradas", style = MaterialTheme.typography.titleMedium)
-                Text("Toca «Nueva oportunidad» para crear la primera")
+        LazyColumn(
+            Modifier.padding(pad),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Tarjeta de Indicadores de Mercado (API Externa)
+            item {
+                TarjetaIndicadoresMercado(uiState.indicadores, uiState.cargandoIndicadores)
             }
-        } else {
-            LazyColumn(Modifier.padding(pad), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(lista, key = { it.id }) { o -> TarjetaOportunidad(o, { alEditar(o.id) }, Modifier.animateItem()) }
+
+            if (lista.isEmpty()) {
+                item {
+                    Column(
+                        Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        Arrangement.Center,
+                        Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Filled.Lightbulb, null, Modifier.size(80.dp), tint = MaterialTheme.colorScheme.outline)
+                        Text("Aún no hay oportunidades registradas", style = MaterialTheme.typography.titleMedium)
+                        Text("Toca «Nueva oportunidad» para crear la primera")
+                    }
+                }
+            } else {
+                items(lista, key = { it.id }) { o ->
+                    TarjetaOportunidad(o, { alEditar(o.id) }, Modifier.animateItem())
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaIndicadoresMercado(indicadores: MindicadorResponse?, cargando: Boolean) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Indicadores de Mercado (API Externa)",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            if (cargando) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+            } else if (indicadores != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    indicadores.uf?.let { Text("UF: $${it.valor}", style = MaterialTheme.typography.bodySmall) }
+                    indicadores.dolar?.let { Text("Dólar: $${it.valor}", style = MaterialTheme.typography.bodySmall) }
+                    indicadores.euro?.let { Text("Euro: $${it.valor}", style = MaterialTheme.typography.bodySmall) }
+                }
+            } else {
+                Text(
+                    "Consulta de valores UF/Dólar lista para valoración comercial",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
             }
         }
     }
