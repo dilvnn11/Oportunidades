@@ -73,7 +73,7 @@ class OportunidadViewModelTest {
     fun guardar_conCamposValidos_ejecutaGuardadoEnRepo() {
         runTest {
             viewModel.onNombre("Licitación Software")
-            viewModel.onTipo("Desarrollo")
+            viewModel.onTipo("Feria comercial")
             viewModel.onDescripcion("Desarrollo de módulo corporativo")
             viewModel.onFuente("Cliente habitual")
             viewModel.onPrioridad("Alta")
